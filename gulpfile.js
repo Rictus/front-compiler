@@ -1,7 +1,5 @@
 'use strict';
 var gulp = require('gulp');
-//TODO : Separer les confs pour en faire devenir des parametres
-//TODO : Les parametres de confs qui ne doivent pas sortir d'ici peuvent rester ici. Il faudra merge des objets..
 //TODO : Ajouter la cmd de lancement de compilation et de watch dans package.json comme script start
 //TODO : Revoir les modules deprecated pour utiliser les plus recents
 //TODO : gulp-minify-css > gulp-clean-css
@@ -15,152 +13,177 @@ var tasksToCompleteBeforeBrowser = [];
 var tasksThatReloadBrowser = [];
 var startupTasks = [];
 var tksNames;
+
+function isArray(obj) {
+    return typeof obj === "object" && typeof obj.length === "number";
+}
+
 var megaConf = {
-    css: {
-        active: false,
-        module: gulpCss,
-        dev: {
-            active: true,
-            streamCss: false,
-            watchPath: "../dev/css/**/*.less",
-            destPath: "../dev-public/css/",
-            concat: false,
-            autoprefix: true,
-            autoprefixString: '> 1%',
-            less: true,
-            minify: false
-        },
-        prod: {
-            active: true,
-            streamCss: false,
-            watchPath: "../dev/css/**/*.less",
-            destPath: "../prod/css/",
-            renameTo: "style.min.css",
-            concat: true,
-            autoprefix: true,
-            autoprefixString: '> 1%',
-            less: true,
-            minify: true
-        }
-    },
-    js: {
-        active: false,
-        module: gulpJs,
-        dev: {
-            active: true,
-            streamJs: true,
-            watchPath: "../dev/js/**/*.js",
-            destPath: "../dev-public/js/",
-            concat: true,
-            renameTo: 'global.min.js',
-            uglify: false
-        },
-        prod: {
-            active: true,
-            streamJs: false,
-            watchPath: "../dev/js/**/*.js",
-            destPath: "../prod/js/",
-            concat: true,
-            renameTo: 'global.min.js',
-            uglify: true
-        }
-    },
-    img: {
-        active: false,
-        module: gulpImg,
-        dev: {
-            active: true,
-            watchPath: "../dev/img/**/*.{png,jpg,jpeg,gif,svg}",
-            destPath: "../dev-public/img/"
-        },
-        prod: {
-            active: true,
-            watchPath: "../dev/img/**/*.{png,jpg,jpeg,gif,svg}",
-            destPath: "../prod/img/"
-        }
-    },
-    html: {
-        active: false,
-        module: gulpHtml,
-        dev: {
-            active: true,
-            streamHTML: true,
-            watchPath: "../dev/*.html",
-            destPath: "../dev-public/",
-            minify: false
-        },
-        prod: {
-            active: true,
-            streamHTML: true,
-            watchPath: "../dev/*.html",
-            destPath: "../prod/",
-            minify: true
-        }
-    }
+    css: {},
+    js: {},
+    img: {},
+    html: {}
 };
-
-var browerSync = {
-    active: true,
-    baseDir: "../prod/",
-    indexUrl: "index_color.html",
-    serverPort: 3001,
-    browsers: ["google chrome"],
-    reloadOnTasks: []
+var browserSync = {
+    active: false
 };
-
-
-///loop through confs
-
-for (var key in megaConf) {
-    if (megaConf.hasOwnProperty(key) && megaConf[key].active) {
-        var responsibleModule = megaConf[key].module;
-        responsibleModule.init(megaConf[key]);
-        tksNames = responsibleModule.getTasksNames();
-        tasksToCompleteBeforeBrowser = tasksToCompleteBeforeBrowser.concat(tksNames);
-        tasksThatReloadBrowser = tasksThatReloadBrowser.concat(tksNames);
-        startupTasks = startupTasks.concat(tksNames);
-    }
-}
-
-if (browerSync.active) {
-    gulpServer.init(browerSync, tasksToCompleteBeforeBrowser, tasksThatReloadBrowser);
-    startupTasks.push(gulpServer.getTasksNames());
-}
-
-gulp.task('default', startupTasks, function () {
-    console.log(startupTasks);
-});
-
-
-function initCss(taskName, cssConfs) {
-    var isArray = function (obj) {
-        return typeof obj === "object" && typeof obj.length === "number";
-    };
-    if (!isArray(cssConfs)) {
-        cssConfs = [cssConfs];
-    }
-    var defaultCssConf = {
-        active: false,
-        module: gulpCss
-    };
-
-    megaConf.css[taskName] = cssConfs;
-    //WIP
-    //WIP
-}
 
 
 /**
- * Merge all properties of object 1 to object 2
- * @param obj1
- * @param obj2
- * @returns {*}
+ *
+ * @param taskName
+ * @param streamJs
+ * @param watchPath
+ * @param destPath
+ * @param concat
+ * @param renameTo
+ * @param uglify
  */
-function mergeObj(obj1, obj2) {
-    for (var prop in obj1) {
-        if (obj1.hasOwnProperty(prop)) {
-            obj2[prop] = obj1[prop];
+var jsTask = function (taskName, streamJs, watchPath, destPath, concat, renameTo, uglify) {
+    streamJs = !!streamJs;
+    concat = !!concat;
+    uglify = !!uglify;
+    renameTo = typeof renameTo === "string" ? renameTo : "global.min.js";
+    megaConf["js"].active = true;
+    megaConf["js"].module = gulpJs;
+    megaConf["js"][taskName] = {
+        active: true,
+        streamJs: streamJs,
+        watchPath: watchPath,
+        destPath: destPath,
+        concat: concat,
+        renameTo: renameTo,
+        uglify: uglify
+    };
+};
+
+
+/**
+ *
+ * @param taskName
+ * @param streamCss
+ * @param watchPath
+ * @param destPath
+ * @param concat
+ * @param autoprefix
+ * @param autoprefixString
+ * @param less
+ * @param minify
+ */
+var cssTask = function (taskName, streamCss, watchPath, destPath, concat, autoprefix, autoprefixString, less, minify) {
+    streamCss = !!streamCss;
+    concat = !!concat;
+    autoprefix = !!autoprefix;
+    autoprefixString = typeof autoprefix === "string" ? autoprefix : '> 1%';
+    less = !!less;
+    minify = !!minify;
+    megaConf["css"]["active"] = true;
+    megaConf["css"].module = gulpCss;
+    megaConf["css"][taskName] = {
+        active: true,
+        streamCss: streamCss,
+        watchPath: watchPath,
+        destPath: destPath,
+        concat: concat,
+        autoprefix: autoprefix,
+        autoprefixString: autoprefixString,
+        less: less,
+        minify: minify
+    };
+};
+
+
+/**
+ *
+ * @param taskName
+ * @param watchPath
+ * @param destPath
+ */
+var imgTask = function (taskName, watchPath, destPath) {
+    megaConf["img"].active = true;
+    megaConf["img"].module = gulpImg;
+    megaConf["img"][taskName] = {
+        active: true,
+        watchPath: watchPath,
+        destPath: destPath
+    };
+};
+
+
+/**
+ *
+ * @param taskName
+ * @param streamHTML
+ * @param watchPath
+ * @param destPath
+ * @param minify
+ */
+var htmlTask = function (taskName, streamHTML, watchPath, destPath, minify) {
+    minify = !!minify;
+    megaConf["html"].active = true;
+    megaConf["html"].module = gulpHtml;
+    megaConf["html"][taskName] = {
+        active: true,
+        streamHTML: streamHTML,
+        watchPath: watchPath,
+        destPath: destPath,
+        minify: minify
+    };
+};
+
+
+/**
+ * Only one browserTask is allowed.
+ * @param baseDir           The directory from where the browser is launched. Usually same directory as your index.html
+ * @param indexUrl          The name of your index.html file
+ * @param serverPort        The port where to launch the server
+ * @param browsers          A string describing which browser to launch. Default value is your default browser.
+ *                          Supposedly, you would be able to launch multiple browsers. But never succeed.
+ *                          Example : "google chrome"
+ * @param reloadOnTasks     An array containing all your tasks names from where the browser should be reloaded when its completed.
+ */
+var browserTask = function (baseDir, indexUrl, serverPort, browsers, reloadOnTasks) {
+    reloadOnTasks = isArray(reloadOnTasks) ? reloadOnTasks : [];
+    browsers = isArray(browsers) ? browsers : [browsers];
+    browserSync = {
+        active: true,
+        baseDir: baseDir,
+        indexUrl: indexUrl,
+        serverProt: serverPort,
+        browsers: browsers,
+        reloadOnTasks: reloadOnTasks
+    };
+};
+
+
+var launch = function () {
+    ///loop through confs
+    for (var key in megaConf) {
+        if (megaConf.hasOwnProperty(key) && megaConf[key].active) {
+            var responsibleModule = megaConf[key].module;
+            responsibleModule.init(megaConf[key]);
+            tksNames = responsibleModule.getTasksNames();
+            tasksToCompleteBeforeBrowser = tasksToCompleteBeforeBrowser.concat(tksNames);
+            tasksThatReloadBrowser = tasksThatReloadBrowser.concat(tksNames);
+            startupTasks = startupTasks.concat(tksNames);
         }
     }
-    return obj2;
-}
+
+    if (browserSync["active"]) {
+        gulpServer.init(browserSync, tasksToCompleteBeforeBrowser, tasksThatReloadBrowser);
+        startupTasks.push(gulpServer.getTasksNames());
+    }
+
+    gulp["task"]('default', startupTasks, function () {
+        console.log(startupTasks);
+    });
+};
+
+module.exports = {
+    jsTask: jsTask,
+    cssTask: cssTask,
+    imgTask: imgTask,
+    htmlTask: htmlTask,
+    browserTask: browserTask,
+    launch: launch
+};
