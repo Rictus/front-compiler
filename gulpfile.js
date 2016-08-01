@@ -1,9 +1,10 @@
 'use strict';
 var gulp = require('gulp');
-//TODO : Separer les confs pour en faire devenir des paramètres
-    //Les paramètres de confs qui ne doivent pas sortir d'ici peuvent rester ici. Il faudra merge des objets..
+//TODO : Separer les confs pour en faire devenir des parametres
+//TODO : Les parametres de confs qui ne doivent pas sortir d'ici peuvent rester ici. Il faudra merge des objets..
 //TODO : Ajouter la cmd de lancement de compilation et de watch dans package.json comme script start
-//TODO : Revoir les modules deprecated pour utiliser les plus récents
+//TODO : Revoir les modules deprecated pour utiliser les plus recents
+//TODO : gulp-minify-css > gulp-clean-css
 //TODO : Ajouter la gestion des fonts
 var gulpServer = require('./gulp_submodules/gulpfile_server.js')(gulp);
 var gulpCss = require('./gulp_submodules/gulpfile_css.js')(gulp, gulpServer.getBrowserSyncInstance);
@@ -131,4 +132,35 @@ gulp.task('default', startupTasks, function () {
 });
 
 
+function initCss(taskName, cssConfs) {
+    var isArray = function (obj) {
+        return typeof obj === "object" && typeof obj.length === "number";
+    };
+    if (!isArray(cssConfs)) {
+        cssConfs = [cssConfs];
+    }
+    var defaultCssConf = {
+        active: false,
+        module: gulpCss
+    };
 
+    megaConf.css[taskName] = cssConfs;
+    //WIP
+    //WIP
+}
+
+
+/**
+ * Merge all properties of object 1 to object 2
+ * @param obj1
+ * @param obj2
+ * @returns {*}
+ */
+function mergeObj(obj1, obj2) {
+    for (var prop in obj1) {
+        if (obj1.hasOwnProperty(prop)) {
+            obj2[prop] = obj1[prop];
+        }
+    }
+    return obj2;
+}
