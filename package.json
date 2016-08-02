@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "A simple way to minimize everything on your front application",
   "scripts": {
-    "start": "gulp default"
+    "start": "gulp"
   },
   "author": "Rictus",
   "devDependencies": {

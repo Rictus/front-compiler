@@ -1,9 +1,9 @@
 'use strict';
-var gulp = require('gulp');
-//TODO : Ajouter la cmd de lancement de compilation et de watch dans package.json comme script start
+
 //TODO : Revoir les modules deprecated pour utiliser les plus recents
 //TODO : gulp-minify-css > gulp-clean-css
 //TODO : Ajouter la gestion des fonts
+var gulp = require('gulp');
 var gulpServer = require('./gulp_submodules/gulpfile_server.js')(gulp);
 var gulpCss = require('./gulp_submodules/gulpfile_css.js')(gulp, gulpServer.getBrowserSyncInstance);
 var gulpHtml = require('./gulp_submodules/gulp_html.js')(gulp, gulpServer.getBrowserSyncInstance);
@@ -27,7 +27,6 @@ var megaConf = {
 var browserSync = {
     active: false
 };
-
 
 /**
  *
@@ -57,7 +56,6 @@ var jsTask = function (taskName, streamJs, watchPath, destPath, concat, renameTo
     };
 };
 
-
 /**
  *
  * @param taskName
@@ -65,14 +63,16 @@ var jsTask = function (taskName, streamJs, watchPath, destPath, concat, renameTo
  * @param watchPath
  * @param destPath
  * @param concat
+ * @param concatedFilename
  * @param autoprefix
  * @param autoprefixString
  * @param less
  * @param minify
  */
-var cssTask = function (taskName, streamCss, watchPath, destPath, concat, autoprefix, autoprefixString, less, minify) {
+var cssTask = function (taskName, streamCss, watchPath, destPath, concat, concatedFilename, autoprefix, autoprefixString, less, minify) {
     streamCss = !!streamCss;
     concat = !!concat;
+    concatedFilename = typeof concatedFilename === "string" ? concatedFilename : "style.min.css";
     autoprefix = !!autoprefix;
     autoprefixString = typeof autoprefix === "string" ? autoprefix : '> 1%';
     less = !!less;
@@ -85,13 +85,13 @@ var cssTask = function (taskName, streamCss, watchPath, destPath, concat, autopr
         watchPath: watchPath,
         destPath: destPath,
         concat: concat,
+        renameTo: concatedFilename,
         autoprefix: autoprefix,
         autoprefixString: autoprefixString,
         less: less,
         minify: minify
     };
 };
-
 
 /**
  *
@@ -108,7 +108,6 @@ var imgTask = function (taskName, watchPath, destPath) {
         destPath: destPath
     };
 };
-
 
 /**
  *
@@ -130,7 +129,6 @@ var htmlTask = function (taskName, streamHTML, watchPath, destPath, minify) {
         minify: minify
     };
 };
-
 
 /**
  * Only one browserTask is allowed.
@@ -174,16 +172,13 @@ var launch = function () {
         startupTasks.push(gulpServer.getTasksNames());
     }
 
-    gulp["task"]('default', startupTasks, function () {
+    gulp.task('default', startupTasks, function () {
         console.log(startupTasks);
     });
 };
 
-module.exports = {
-    jsTask: jsTask,
-    cssTask: cssTask,
-    imgTask: imgTask,
-    htmlTask: htmlTask,
-    browserTask: browserTask,
-    launch: launch
-};
+cssTask("dev", false, "../test/dev/*.less", "../test/prod/", true, "style.min.css", true, '> 1%', true, true);
+jsTask("dev", false, "../test/dev/*.js", "../test/prod/", true, "global.min.js", true);
+imgTask("dev", "../test/dev/*.{jpg,png,jpeg,gif,svg}", "../test/prod/");
+htmlTask("dev", false, "../test/dev/*.html", "../test/prod/", true);
+launch();
